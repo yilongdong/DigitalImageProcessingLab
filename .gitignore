@@ -1,0 +1,7 @@
+build/
+.vscode/
+.cache/
+.idea/
+node_modules/
+Result/**/*.bmp
+Result/**/*.yuv

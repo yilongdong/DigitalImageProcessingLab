@@ -1,0 +1,6 @@
+#include <string>
+
+#define PROJECT_PATH "@PROJECT_PATH@"
+#define RESOURCES_PATH(Lab) std::string(PROJECT_PATH "/Resources/" #Lab)
+#define RESULT_PATH(Lab) std::string(PROJECT_PATH "/Result/" #Lab)
+#define AUTHOR std::string("yilongdong")
