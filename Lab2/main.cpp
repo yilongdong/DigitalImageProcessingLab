@@ -79,9 +79,9 @@ void testGammaCorrection(std::string const &input, std::string const &output,
     for (int i = 0; i < bitmapImage.height(); ++i) {
         BGR24 *pixels = (BGR24 *)(bitmapImage.line(i));
         for (uint32_t j = 0; j < pixelPerLine; ++j) {
-            pixels[j].R = pow(pixels[j].R, gamma);
-            pixels[j].G = pow(pixels[j].G, gamma);
-            pixels[j].B = pow(pixels[j].B, gamma);
+            pixels[j].R = pow(1.0 * pixels[j].R / 255.0 , 1.0 / gamma) * 255;
+            pixels[j].G = pow(1.0 * pixels[j].G / 255.0 , 1.0 / gamma) * 255;
+            pixels[j].B = pow(1.0 * pixels[j].B / 255.0 , 1.0 / gamma) * 255;
         }
     }
 

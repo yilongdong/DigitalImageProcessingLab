@@ -4,11 +4,9 @@
 
 void testChangeBMPColor(std::string const &input, std::string const &output);
 
-void testRGB2YUV444Planar24bit(std::string const &input,
-                               std::string const &output);
+void testRGB2YUV444Planar24bit(std::string const &input, std::string const &output);
 
-void testRGB2YUV444Packed24bit(std::string const &input,
-                               std::string const &output);
+void testLinearGrayscaleTransformation(std::string const &input, std::string const &output);
 
 int main() {
     std::string input, outputDir, output;
@@ -30,9 +28,9 @@ int main() {
     fprintf(stderr, "\tto %s\n", output.c_str());
     testRGB2YUV444Planar24bit(input, output);
 
-    output = outputDir + "/lena.yuv444packed24bit.yuv";
+    output = outputDir + "/lena.线性变换.bmp";
     fprintf(stderr, "\tto %s\n", output.c_str());
-    testRGB2YUV444Packed24bit(input, output);
+    testLinearGrayscaleTransformation(input, output);
     return 0;
 }
 
@@ -53,8 +51,7 @@ void testChangeBMPColor(std::string const &input, std::string const &output) {
     bitmapImage.saveToFile(output);
 }
 
-void testRGB2YUV444Planar24bit(std::string const &input,
-                               std::string const &output) {
+void testRGB2YUV444Planar24bit(std::string const &input, std::string const &output) {
     // ffplay -f rawvideo -pixel_format yuv444p -s 129x129 ../asset/lena.yuv
     image::BitmapImage bitmapImage(input);
     using BGR24 = image::colorspace::BGR24;
@@ -64,7 +61,7 @@ void testRGB2YUV444Planar24bit(std::string const &input,
     std::vector<uint8_t> UPlanar(pixelsNum);
     std::vector<uint8_t> VPlanar(pixelsNum);
     for (int i = 0; i < bitmapImage.height(); ++i) {
-        BGR24 *rgbLine = (BGR24 *)(bitmapImage.lines().at(bitmapImage.height() - 1 - i));
+        BGR24 *rgbLine = (BGR24 *) (bitmapImage.lines().at(bitmapImage.height() - 1 - i));
         for (uint32_t j = 0; j < bitmapImage.width(); ++j) {
             BGR24 &rgb = rgbLine[j];
             uint8_t Y, U, V;
@@ -83,8 +80,7 @@ void testRGB2YUV444Planar24bit(std::string const &input,
     fclose(fp);
 }
 
-void testRGB2YUV444Packed24bit(std::string const &input,
-                               std::string const &output) {
+void testLinearGrayscaleTransformation(std::string const &input, std::string const &output) {
     // 这个格式需要使用yuv工具查看，但是查看后发现显示两帧，一帧全绿色，一帧正常lena，原因暂不清楚
     image::BitmapImage bitmapImage(input);
     // 计算YUV颜色分量
@@ -92,17 +88,24 @@ void testRGB2YUV444Packed24bit(std::string const &input,
     using YUV = image::colorspace::YUVPacked;
     std::vector<YUV> YUVPackedData(bitmapImage.height() * bitmapImage.width());
     for (int i = bitmapImage.height() - 1; i >= 0; --i) {
-        BGR24 *rgbLine = (BGR24 *)(bitmapImage.lines().at(i));
+        BGR24 *rgbLine = (BGR24 *) (bitmapImage.lines().at(i));
         for (uint32_t j = 0; j < bitmapImage.width(); ++j) {
             BGR24 &rgb = rgbLine[j];
             uint8_t Y, U, V;
             std::tie(Y, U, V) = RGB2YUV(rgb.R, rgb.G, rgb.B);
-            YUV yuv { .Y = Y, .U = U, .V = V };
-            YUVPackedData.push_back(yuv);
+            if (Y > 160) Y = 200;
+            else if (Y < 100) Y = 50;
+            else {
+                Y = bound(0, round(1.36 * (Y - 100) + 50), 255);
+            }
+            std::tie(rgb.R, rgb.G, rgb.B) = YUV2RGB(Y, U, V);
+//            YUV yuv { .Y = Y, .U = U, .V = V };
+//            YUVPackedData.push_back(yuv);
         }
     }
+    bitmapImage.saveToFile(output);
 
-    FILE *fp = fopen(output.c_str(), "w");
-    fwrite(YUVPackedData.data(), sizeof(YUV), YUVPackedData.size(), fp);
-    fclose(fp);
+//    FILE *fp = fopen(output.c_str(), "w");
+//    fwrite(YUVPackedData.data(), sizeof(YUV), YUVPackedData.size(), fp);
+//    fclose(fp);
 }
